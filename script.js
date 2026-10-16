@@ -175,7 +175,7 @@
         const pinPopupClose = document.getElementById('pin-popup-close');
 
         // DEFAULT PIN: Silakan ubah angka ini jika ingin PIN lain
-        const SECRET_PIN = "0709";
+        const SECRET_PIN = "1708";
 
         let pinAttempt = 0;
         let popupTimeout = null;
@@ -408,6 +408,18 @@ document.addEventListener("DOMContentLoaded", function () {
                         modalIframe.classList.add('iframe-facebook');
                     }
 
+                    // Jeda background music agar tidak bertabrakan dengan lagu/video yang diputar
+                    const bgMusic = document.getElementById('bg-music');
+                    const iconPlay = document.getElementById('icon-play');
+                    const iconPause = document.getElementById('icon-pause');
+                    if (bgMusic && !bgMusic.paused) {
+                        bgMusic.pause();
+                        if (iconPlay && iconPause) {
+                            iconPlay.style.display = 'block';
+                            iconPause.style.display = 'none';
+                        }
+                    }
+
                     const customCaption = this.getAttribute('data-caption');
                     const teksCaption = customCaption ? customCaption : this.querySelector('.planet-caption').innerText;
                     if (modalCaption) modalCaption.innerText = teksCaption;
@@ -425,11 +437,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 else if (this.classList.contains('polaroid')) {
                     modalImg.src = this.querySelector('img').src;
                     modalImg.style.aspectRatio = "1 / 1";
+                    const captionEl = this.querySelector('.caption');
+                    if (modalCaption && captionEl) {
+                        modalCaption.innerText = captionEl.innerText;
+                    }
                 }
-                // D. JIKA YANG DIKLIK ADALAH GALERI CINTA
+                // D. JIKA YANG DIKLIK ADALAH GALERI CINTA (Core Memories)
                 else {
                     modalImg.src = this.src;
-                    modalImg.style.aspectRatio = "9 / 16";
+                    const cardParent = this.closest('.scratch-card');
+                    if ((cardParent && cardParent.classList.contains('card-ratio-3-2')) ||
+                        this.src.includes('5.jpeg') || this.src.includes('6.jpeg')) {
+                        modalImg.style.aspectRatio = "3 / 2";
+                        modalImg.style.width = "90vw";
+                        modalImg.style.maxWidth = "750px";
+                    } else {
+                        modalImg.style.aspectRatio = "9 / 16";
+                        modalImg.style.width = "";
+                        modalImg.style.maxWidth = "90vw";
+                    }
                 }
 
                 modal.classList.add('show-modal');
@@ -448,12 +474,18 @@ document.addEventListener("DOMContentLoaded", function () {
 function tutupModal() {
     const modal = document.getElementById('image-modal');
     const modalIframe = document.getElementById('modal-iframe');
+    const modalImg = document.getElementById('modal-img');
 
     if (modal) {
         modal.classList.remove('show-modal');
         // KUNCI PENTING: Mengosongkan src agar lagu berhenti berputar saat ditutup
         if (modalIframe) {
             modalIframe.src = "";
+        }
+        if (modalImg) {
+            modalImg.style.aspectRatio = "";
+            modalImg.style.width = "";
+            modalImg.style.maxWidth = "";
         }
     }
 }
@@ -767,13 +799,24 @@ document.addEventListener('DOMContentLoaded', () => {
         let drawMoveCount = 0;
 
         setTimeout(() => {
-            canvas.width = 220;
-            canvas.height = Math.round(220 * 16 / 9);
+            const card = canvas.parentElement;
+            const isRatio32 = card && (card.classList.contains('card-ratio-3-2') || index >= 4);
+            const cardRect = card ? card.getBoundingClientRect() : null;
+            const w = (cardRect && cardRect.width > 0) ? Math.round(cardRect.width) : (isRatio32 ? 340 : 220);
+            const h = (cardRect && cardRect.height > 0) ? Math.round(cardRect.height) : (isRatio32 ? Math.round(w * 2 / 3) : Math.round(w * 16 / 9));
+
+            canvas.width = w;
+            canvas.height = h;
+
+            if (isRatio32) {
+                brushRadius = 32; // Kuas sedikit lebih besar untuk kanvas 3:2 agar menggosok terasa pas
+            }
 
             ctx.fillStyle = '#0a0a0a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < 200; i++) {
+            const starCount = Math.round((w * h) / 420);
+            for (let i = 0; i < starCount; i++) {
                 ctx.beginPath();
                 ctx.arc(
                     Math.random() * canvas.width,
@@ -1145,7 +1188,7 @@ function tampilkanTahap3() {
 
         setTimeout(() => {
             if (msg) {
-                msg.textContent = 'Semoga cinta kita terus tumbuh dan abadi selamanya. Happy 8th Anniversary, sayang 🤍';
+                msg.textContent = 'Semoga cinta kita terus tumbuh dan abadi selamanya. Happy Anniversary 2nd, sayang 🤍';
                 msg.className = 'candle-message show-msg final-msg';
             }
         }, 600);
